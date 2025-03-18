@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "695533551957",
+    "project_id": "tdfruitstore",
+    "storage_bucket": "tdfruitstore.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695533551957:android:048508294e1e4dcd1f2fdc",
+        "android_client_info": {
+          "package_name": "com.android.tdfruitstore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWuJ1AcPNBCJQV7sBWpiVeM0P67TkNehg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

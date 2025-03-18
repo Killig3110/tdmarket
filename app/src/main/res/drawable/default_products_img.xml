@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView
+        android:id="@+id/apple"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/apple"
+        android:layout_marginEnd="8dp"/>
+
+    <ImageView
+        android:id="@+id/banana"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/banana"
+        android:layout_marginStart="8dp"/>
+
+    <ImageView
+        android:id="@+id/carrot"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/carrot"
+        android:layout_marginEnd="8dp"/>
+
+    <ImageView
+        android:id="@+id/eggs"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/eggs"
+        android:layout_marginStart="8dp"/>
+
+    <ImageView
+        android:id="@+id/milk"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/milk"
+        android:layout_marginEnd="8dp"/>
+
+    <ImageView
+        android:id="@+id/orange_juice"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/orange_juice"
+        android:layout_marginStart="8dp"/>
+
+    <ImageView
+        android:id="@+id/rice"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/rice"
+        android:layout_marginEnd="8dp"/>
+
+    <ImageView
+        android:id="@+id/bread"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/bread"
+        android:layout_marginStart="8dp"/>
+
+    <ImageView
+        android:id="@+id/cheese"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/cheese"
+        android:layout_marginEnd="8dp"/>
+
+    <ImageView
+        android:id="@+id/tomato"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/tomato"
+        android:layout_marginStart="8dp"/>
+</selector>
