@@ -46,22 +46,6 @@ public class UserDAO {
                 .addOnFailureListener(callback::onFailure);
     }
 
-    // 🔹 Lấy user ID từ Firestore theo email
-    public void getUserIdByEmail(String email, FirestoreCallback<String> callback) {
-        db.collection("users").document(email)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists() && documentSnapshot.contains("id")) {
-                        String userId = documentSnapshot.getString("id");
-                        callback.onSuccess(userId);
-                    } else {
-                        Log.e("Firestore", "❌ Không tìm thấy user ID với email: " + email);
-                        callback.onFailure(new Exception("User ID không tồn tại"));
-                    }
-                })
-                .addOnFailureListener(callback::onFailure);
-    }
-
     // 🔹 Lấy user theo ID từ Firestore (Sửa `int userId` thành `String userId`)
     public void getUserById(String userId, FirestoreCallback<User> callback) {
         db.collection("users").whereEqualTo("id", userId)
@@ -82,20 +66,6 @@ public class UserDAO {
                     }
                 })
                 .addOnFailureListener(callback::onFailure);
-    }
-
-    // 🔹 Xóa user khỏi Firestore
-    public void deleteUser(String email, FirestoreCallback<Boolean> callback) {
-        db.collection("users").document(email)
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("Firestore", "✅ User deleted: " + email);
-                    callback.onSuccess(true);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "❌ Failed to delete user", e);
-                    callback.onFailure(e);
-                });
     }
 
     // 🔹 Cập nhật thông tin user trong Firestore

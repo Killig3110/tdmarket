@@ -16,7 +16,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.tdfruitstore.R;
-import com.android.tdfruitstore.data.JsonReader;
+import com.android.tdfruitstore.data.ApiClient;
+import com.android.tdfruitstore.data.ApiService;
 import com.android.tdfruitstore.data.dao.CategoryDAO;
 import com.android.tdfruitstore.data.dao.FirestoreCallback;
 import com.android.tdfruitstore.data.dao.ProductDAO;
@@ -38,6 +39,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +47,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity implements CategoryAdapter.OnCategoryClickListener {
     private RecyclerView rvCategory, rvProducts;
@@ -251,7 +257,8 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
                 } else {
                     // 🔥 Nếu Firestore không có dữ liệu, tải từ JSON
                     Log.w("Firestore", "⚠ Firestore trống, tải dữ liệu từ JSON...");
-                    loadProductsFromJSON();
+//                    loadProductsFromJSON();
+                    loadProductsFromAPI();
                 }
             }
 
@@ -259,18 +266,97 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
             public void onFailure(Exception e) {
                 Log.e("Firestore", "❌ Lỗi khi tải sản phẩm!", e);
                 // 🔥 Nếu lỗi Firestore, cũng tải từ JSON để đảm bảo hiển thị
-                loadProductsFromJSON();
+//                loadProductsFromJSON();
+                loadProductsFromAPI();
             }
         });
     }
 
-    private void loadProductsFromJSON() {
-        String jsonData = JsonReader.readJsonFromRaw(this, R.raw.products);
-        if (jsonData == null) {
-            Log.e("ERROR", "Không thể đọc file JSON!");
-            return;
-        }
+//    private void loadProductsFromJSON() {
+//        String jsonData = JsonReader.readJsonFromRaw(this, R.raw.products);
+//        if (jsonData == null) {
+//            Log.e("ERROR", "Không thể đọc file JSON!");
+//            return;
+//        }
+//
+//        try {
+//            JSONObject jsonObject = new JSONObject(jsonData);
+//            JSONArray productsArray = jsonObject.getJSONArray("products");
+//
+//            for (int i = 0; i < productsArray.length(); i++) {
+//                JSONObject productObj = productsArray.getJSONObject(i);
+//
+//                String name = productObj.optString("product_name", "No Name");
+//                String imageUrl = productObj.optString("image_url", "");
+//                String category = productObj.optString("categories", "Unknown");
+//                String code = productObj.optString("code", "Unknown");
+//                double randomPrice = ThreadLocalRandom.current().nextDouble(10, 50);
+//                int stock = ThreadLocalRandom.current().nextInt(10, 200);
+//                double rating = ThreadLocalRandom.current().nextDouble(3, 5);
+//                //Cắt chuỗi ở category lấy ra từ đầu đến dấu "," or " "
+//                if (category.contains(" ")) {
+//                    category = category.substring(0, category.indexOf(" "));
+//                } else if (category.contains(",")) {
+//                    category = category.substring(0, category.indexOf(","));
+//                }
+//
+//                Product product = new Product(UUID.randomUUID().toString(), name, imageUrl, category, code, randomPrice, stock, rating);
+//                productDAO.insertProduct(product, new FirestoreCallback<Boolean>() {
+//                    @Override
+//                    public void onSuccess(Boolean result) {
+//                        if (result) {
+//                            Log.d("Firestore", "🔥 Đã thêm sản phẩm vào Firestore!");
+//                            productList.add(product);
+//                            productAdapter.notifyDataSetChanged();
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Exception e) {
+//                        Log.e("Firestore", "❌ Lỗi khi thêm sản phẩm vào Firestore!", e);
+//                    }
+//                });
+//                productList.add(product);
+//            }
+//
+//            runOnUiThread(() -> productAdapter.notifyDataSetChanged());
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//            Log.e("ERROR", "Lỗi khi parse JSON!");
+//        }
+//    }
 
+    private void loadProductsFromAPI() {
+        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+
+        apiService.getRawJson().enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        // 🔹 Lấy JSON dưới dạng String
+                        String jsonData = response.body().string();
+                        Log.d("API", "🔥 JSON API: " + jsonData); // Debug JSON
+
+                        // 🔹 Gọi hàm xử lý JSON như cũ
+                        processJsonData(jsonData);
+
+                    } catch (IOException e) {
+                        Log.e("API", "❌ Lỗi khi đọc JSON từ API", e);
+                    }
+                } else {
+                    Log.e("API", "❌ Lỗi phản hồi API! HTTP Code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("API", "❌ Lỗi kết nối API: " + t.getMessage());
+            }
+        });
+    }
+
+    private void processJsonData(String jsonData) {
         try {
             JSONObject jsonObject = new JSONObject(jsonData);
             JSONArray productsArray = jsonObject.getJSONArray("products");
@@ -282,39 +368,34 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
                 String imageUrl = productObj.optString("image_url", "");
                 String category = productObj.optString("categories", "Unknown");
                 String code = productObj.optString("code", "Unknown");
+
+                // 🔹 Tạo giá trị random cho price, stock, rating
                 double randomPrice = ThreadLocalRandom.current().nextDouble(10, 50);
                 int stock = ThreadLocalRandom.current().nextInt(10, 200);
                 double rating = ThreadLocalRandom.current().nextDouble(3, 5);
-                //Cắt chuỗi ở category lấy ra từ đầu đến dấu "," or " "
+
+                // 🔹 Cắt chuỗi category lấy phần đầu tiên
                 if (category.contains(" ")) {
                     category = category.substring(0, category.indexOf(" "));
                 } else if (category.contains(",")) {
                     category = category.substring(0, category.indexOf(","));
                 }
 
+                // 🔹 Tạo đối tượng Product
                 Product product = new Product(UUID.randomUUID().toString(), name, imageUrl, category, code, randomPrice, stock, rating);
-                productDAO.insertProduct(product, new FirestoreCallback<Boolean>() {
-                    @Override
-                    public void onSuccess(Boolean result) {
-                        if (result) {
-                            Log.d("Firestore", "🔥 Đã thêm sản phẩm vào Firestore!");
-                            productList.add(product);
-                            productAdapter.notifyDataSetChanged();
-                        }
-                    }
 
-                    @Override
-                    public void onFailure(Exception e) {
-                        Log.e("Firestore", "❌ Lỗi khi thêm sản phẩm vào Firestore!", e);
-                    }
-                });
+                // 🔹 Thêm sản phẩm vào danh sách
                 productList.add(product);
             }
 
+            // 🔹 Cập nhật UI
             runOnUiThread(() -> productAdapter.notifyDataSetChanged());
+            Log.d("API", "🔥 Đã xử lý sản phẩm: " + productList.size());
+
         } catch (JSONException e) {
-            e.printStackTrace();
-            Log.e("ERROR", "Lỗi khi parse JSON!");
+            Log.e("API", "❌ Lỗi khi parse JSON!", e);
         }
     }
+
+
 }

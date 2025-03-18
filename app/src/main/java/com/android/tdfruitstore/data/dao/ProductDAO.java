@@ -28,20 +28,6 @@ public class ProductDAO {
                 });
     }
 
-    // 🔥 Cập nhật một sản phẩm
-    public void updateProduct(Product product, FirestoreCallback<Boolean> callback) {
-        db.collection(COLLECTION_NAME).document(product.getId()) // ID là String
-                .set(product)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("Firestore", "✅ Sản phẩm đã cập nhật: " + product.getName());
-                    callback.onSuccess(true);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "❌ Lỗi khi cập nhật sản phẩm", e);
-                    callback.onFailure(e);
-                });
-    }
-
     // 🔥 Xóa một sản phẩm
     public void deleteProduct(String productId, FirestoreCallback<Boolean> callback) {
         db.collection(COLLECTION_NAME).document(productId) // ID là String
@@ -157,24 +143,6 @@ public class ProductDAO {
                     Log.e("Firestore", "❌ Lỗi khi tìm kiếm sản phẩm", e);
                     callback.onFailure(e);
                 });
-    }
-
-    // 🔥 Thêm danh sách sản phẩm
-    public void insertProducts(List<Product> productList, FirestoreCallback<Boolean> callback) {
-        for (Product product : productList) {
-            insertProduct(product, new FirestoreCallback<Boolean>() {
-                @Override
-                public void onSuccess(Boolean result) {
-                    Log.d("Firestore", "✅ Đã thêm sản phẩm: " + product.getName());
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    Log.e("Firestore", "❌ Lỗi khi thêm sản phẩm: " + product.getName(), e);
-                }
-            });
-        }
-        callback.onSuccess(true);
     }
 
     // 🔥 Lấy sản phẩm theo tên
