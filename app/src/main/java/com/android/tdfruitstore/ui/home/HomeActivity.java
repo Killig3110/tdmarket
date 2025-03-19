@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.tdfruitstore.R;
 import com.android.tdfruitstore.data.ApiClient;
 import com.android.tdfruitstore.data.ApiService;
+import com.android.tdfruitstore.data.FirestoreUtils;
 import com.android.tdfruitstore.data.dao.CategoryDAO;
 import com.android.tdfruitstore.data.dao.FirestoreCallback;
 import com.android.tdfruitstore.data.dao.ProductDAO;
@@ -78,6 +79,8 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
         userDAO = new UserDAO();
         categoryDAO = new CategoryDAO();
         productDAO = new ProductDAO();
+
+        FirestoreUtils.fetchUsersFromFirestore(this);
 
         // Ánh xạ RecyclerView
         rvCategory = findViewById(R.id.rvCategory);
@@ -386,6 +389,22 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
 
                 // 🔹 Thêm sản phẩm vào danh sách
                 productList.add(product);
+
+                // 🔹 Thêm sản phẩm vào Firestore
+                productDAO.insertProduct(product, new FirestoreCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        if (result) {
+                            Log.d("Firestore", "🔥 Đã thêm sản phẩm vào Firestore!");
+                            runOnUiThread(() -> productAdapter.notifyDataSetChanged());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e("Firestore", "❌ Lỗi khi thêm sản phẩm vào Firestore!", e);
+                    }
+                });
             }
 
             // 🔹 Cập nhật UI
