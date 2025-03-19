@@ -7,6 +7,9 @@ import retrofit2.http.GET;
 
 public interface ApiService {
     @GET("Killig3110/tdmarket/master/app/src/main/res/raw/products.json")
-    Call<ResponseBody> getRawJson();
+    Call<ResponseBody> getRawProductJson();
+
+    @GET("Killig3110/tdmarket/master/app/src/main/res/raw/categories.json")
+    Call<ResponseBody> getRawCategoryJson();
 }
 

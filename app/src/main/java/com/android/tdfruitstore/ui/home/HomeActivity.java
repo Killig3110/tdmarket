@@ -19,6 +19,7 @@ import com.android.tdfruitstore.R;
 import com.android.tdfruitstore.data.ApiClient;
 import com.android.tdfruitstore.data.ApiService;
 import com.android.tdfruitstore.data.FirestoreUtils;
+import com.android.tdfruitstore.data.JsonReader;
 import com.android.tdfruitstore.data.dao.CategoryDAO;
 import com.android.tdfruitstore.data.dao.FirestoreCallback;
 import com.android.tdfruitstore.data.dao.ProductDAO;
@@ -35,6 +36,7 @@ import com.android.tdfruitstore.ui.wishlist.WishlistActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -206,7 +208,8 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
                 categoryList.clear();
                 if (categories.isEmpty()) {
                     // 🔥 Nếu danh mục từ Firestore trống, thêm danh mục mặc định
-                    addDefaultCategoriesToFirestore();
+//                     addDefaultCategoriesToFirestore();
+                    loadCategoriesFromAPI();
                 } else {
                     categoryList.addAll(categories);
                     categoryAdapter.notifyDataSetChanged();
@@ -248,6 +251,76 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
         });
     }
 
+    private void loadCategoriesFromAPI() {
+        ApiService apiService = ApiClient.getClient().create(ApiService.class);
+
+        apiService.getRawCategoryJson().enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    try {
+                        // 🔹 Lấy JSON dưới dạng String
+                        String jsonData = response.body().string();
+                        Log.d("API", "🔥 JSON Categories: " + jsonData);
+
+                        // 🔹 Gọi hàm xử lý JSON để thêm vào Firestore
+                        processCategoryJson(jsonData);
+
+                    } catch (IOException e) {
+                        Log.e("API", "❌ Lỗi khi đọc JSON từ API", e);
+                    }
+                } else {
+                    Log.e("API", "❌ Lỗi phản hồi API! HTTP Code: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("API", "❌ Lỗi kết nối API: " + t.getMessage());
+            }
+        });
+    }
+
+    private void processCategoryJson(String jsonData) {
+        try {
+            JSONArray categoryArray = new JSONArray(jsonData);
+            categoryList = new ArrayList<>();
+
+            for (int i = 0; i < categoryArray.length(); i++) {
+                JSONObject categoryObj = categoryArray.getJSONObject(i);
+
+                String id = categoryObj.optString("id", UUID.randomUUID().toString());
+                String name = categoryObj.optString("categoryName", "Unknown");
+                String tag = categoryObj.optString("tag", "unknown");
+                int imageResId = categoryObj.optInt("imageResId", R.drawable.ic_unknown); // Nếu thiếu ảnh, dùng ảnh mặc định
+
+                Category category = new Category(id, name, tag, imageResId);
+                categoryList.add(category);
+            }
+            categoryDAO.insertCategories(categoryList, new FirestoreCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                    if (result) {
+                        Log.d("Firestore", "🔥 Đã thêm danh mục vào Firestore!");
+                        runOnUiThread(() -> {
+                            HomeActivity.this.categoryList.clear();
+                            HomeActivity.this.categoryList.addAll(categoryList);
+                            categoryAdapter.notifyDataSetChanged();
+                        });
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("Firestore", "❌ Lỗi khi thêm danh mục vào Firestore!", e);
+                }
+            });
+
+        } catch (JSONException e) {
+            Log.e("JSON", "❌ Lỗi khi parse JSON", e);
+        }
+    }
+
     private void loadProductsFromFirestore() {
         productDAO.getAllProducts(new FirestoreCallback<List<Product>>() {
             @Override
@@ -275,64 +348,64 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
         });
     }
 
-//    private void loadProductsFromJSON() {
-//        String jsonData = JsonReader.readJsonFromRaw(this, R.raw.products);
-//        if (jsonData == null) {
-//            Log.e("ERROR", "Không thể đọc file JSON!");
-//            return;
-//        }
-//
-//        try {
-//            JSONObject jsonObject = new JSONObject(jsonData);
-//            JSONArray productsArray = jsonObject.getJSONArray("products");
-//
-//            for (int i = 0; i < productsArray.length(); i++) {
-//                JSONObject productObj = productsArray.getJSONObject(i);
-//
-//                String name = productObj.optString("product_name", "No Name");
-//                String imageUrl = productObj.optString("image_url", "");
-//                String category = productObj.optString("categories", "Unknown");
-//                String code = productObj.optString("code", "Unknown");
-//                double randomPrice = ThreadLocalRandom.current().nextDouble(10, 50);
-//                int stock = ThreadLocalRandom.current().nextInt(10, 200);
-//                double rating = ThreadLocalRandom.current().nextDouble(3, 5);
-//                //Cắt chuỗi ở category lấy ra từ đầu đến dấu "," or " "
-//                if (category.contains(" ")) {
-//                    category = category.substring(0, category.indexOf(" "));
-//                } else if (category.contains(",")) {
-//                    category = category.substring(0, category.indexOf(","));
-//                }
-//
-//                Product product = new Product(UUID.randomUUID().toString(), name, imageUrl, category, code, randomPrice, stock, rating);
-//                productDAO.insertProduct(product, new FirestoreCallback<Boolean>() {
-//                    @Override
-//                    public void onSuccess(Boolean result) {
-//                        if (result) {
-//                            Log.d("Firestore", "🔥 Đã thêm sản phẩm vào Firestore!");
-//                            productList.add(product);
-//                            productAdapter.notifyDataSetChanged();
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Exception e) {
-//                        Log.e("Firestore", "❌ Lỗi khi thêm sản phẩm vào Firestore!", e);
-//                    }
-//                });
-//                productList.add(product);
-//            }
-//
-//            runOnUiThread(() -> productAdapter.notifyDataSetChanged());
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//            Log.e("ERROR", "Lỗi khi parse JSON!");
-//        }
-//    }
+    private void loadProductsFromJSON() {
+        String jsonData = JsonReader.readJsonFromRaw(this, R.raw.products);
+        if (jsonData == null) {
+            Log.e("ERROR", "Không thể đọc file JSON!");
+            return;
+        }
+
+        try {
+            JSONObject jsonObject = new JSONObject(jsonData);
+            JSONArray productsArray = jsonObject.getJSONArray("products");
+
+            for (int i = 0; i < productsArray.length(); i++) {
+                JSONObject productObj = productsArray.getJSONObject(i);
+
+                String name = productObj.optString("product_name", "No Name");
+                String imageUrl = productObj.optString("image_url", "");
+                String category = productObj.optString("categories", "Unknown");
+                String code = productObj.optString("code", "Unknown");
+                double randomPrice = ThreadLocalRandom.current().nextDouble(10, 50);
+                int stock = ThreadLocalRandom.current().nextInt(10, 200);
+                double rating = ThreadLocalRandom.current().nextDouble(3, 5);
+                //Cắt chuỗi ở category lấy ra từ đầu đến dấu "," or " "
+                if (category.contains(" ")) {
+                    category = category.substring(0, category.indexOf(" "));
+                } else if (category.contains(",")) {
+                    category = category.substring(0, category.indexOf(","));
+                }
+
+                Product product = new Product(UUID.randomUUID().toString(), name, imageUrl, category, code, randomPrice, stock, rating);
+                productDAO.insertProduct(product, new FirestoreCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        if (result) {
+                            Log.d("Firestore", "🔥 Đã thêm sản phẩm vào Firestore!");
+                            productList.add(product);
+                            productAdapter.notifyDataSetChanged();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e("Firestore", "❌ Lỗi khi thêm sản phẩm vào Firestore!", e);
+                    }
+                });
+                productList.add(product);
+            }
+
+            runOnUiThread(() -> productAdapter.notifyDataSetChanged());
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.e("ERROR", "Lỗi khi parse JSON!");
+        }
+    }
 
     private void loadProductsFromAPI() {
         ApiService apiService = ApiClient.getClient().create(ApiService.class);
 
-        apiService.getRawJson().enqueue(new Callback<ResponseBody>() {
+        apiService.getRawProductJson().enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
