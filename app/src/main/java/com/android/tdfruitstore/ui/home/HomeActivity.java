@@ -305,6 +305,7 @@ public class HomeActivity extends AppCompatActivity implements CategoryAdapter.O
                         runOnUiThread(() -> {
                             HomeActivity.this.categoryList.clear();
                             HomeActivity.this.categoryList.addAll(categoryList);
+                            loadCategoriesFromFirestore();
                             categoryAdapter.notifyDataSetChanged();
                         });
                     }
