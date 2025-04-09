@@ -180,6 +180,8 @@ public class LoginActivity extends AppCompatActivity {
                                         public void onSuccess(Boolean result) {
                                             runOnUiThread(() -> {
                                                 Toast.makeText(btnConfirm.getContext(), "Mật khẩu đã được cập nhật! Vui lòng kiểm tra email!", Toast.LENGTH_SHORT).show();
+                                                dialog.dismiss();
+                                                showConfirmNewPasswordDialog(email, newPassword);
                                             });
                                         }
 
@@ -222,4 +224,44 @@ public class LoginActivity extends AppCompatActivity {
 
         dialog.show();
     }
+
+    private void showConfirmNewPasswordDialog(String email, String expectedPassword) {
+        Dialog confirmDialog = new Dialog(this);
+        confirmDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        confirmDialog.setContentView(R.layout.dialog_confirm_new_password); // bạn tạo layout này nhé
+
+        Window window = confirmDialog.getWindow();
+        if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        EditText etConfirmPassword = confirmDialog.findViewById(R.id.etConfirmPassword);
+        Button btnCheck = confirmDialog.findViewById(R.id.btnCheckPassword);
+        Button btnCancel = confirmDialog.findViewById(R.id.btnCancelConfirm);
+
+        btnCheck.setOnClickListener(v -> {
+            String enteredPass = etConfirmPassword.getText().toString().trim();
+
+            if (enteredPass.isEmpty()) {
+                Toast.makeText(this, "Vui lòng nhập mật khẩu mới bạn vừa đổi!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Thử đăng nhập với email + mật khẩu mới
+            FirebaseAuth.getInstance().signInWithEmailAndPassword(email, enteredPass)
+                    .addOnSuccessListener(authResult -> {
+                        Toast.makeText(this, "Đổi mật khẩu thành công! Bạn có thể đăng nhập.", Toast.LENGTH_SHORT).show();
+                        confirmDialog.dismiss();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Mật khẩu chưa đúng hoặc chưa được cập nhật!", Toast.LENGTH_SHORT).show();
+                    });
+        });
+
+        btnCancel.setOnClickListener(v -> confirmDialog.dismiss());
+
+        confirmDialog.show();
+    }
+
 }

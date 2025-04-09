@@ -136,7 +136,13 @@ public class AllProductsActivity extends AppCompatActivity {
         productDAO.getProductsByKeyword(keyword, new FirestoreCallback<List<Product>>() {
             @Override
             public void onSuccess(List<Product> filteredList) {
-                productAdapter.updateList(filteredList);
+                // Cập nhật danh sách sản phẩm trong adapter
+                // Xóa danh sách cũ và thêm danh sách mới
+                productList.clear();
+                productList.addAll(filteredList);
+                // Cập nhật danh sách sản phẩm trong adapter
+                productAdapter.updateList(productList);
+                productAdapter.notifyDataSetChanged();
                 if (filteredList.isEmpty()) {
                     Toast.makeText(AllProductsActivity.this, "Không tìm thấy sản phẩm phù hợp!", Toast.LENGTH_SHORT).show();
                 }
