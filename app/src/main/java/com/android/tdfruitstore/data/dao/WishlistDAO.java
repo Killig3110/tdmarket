@@ -29,39 +29,6 @@ public class WishlistDAO {
                 });
     }
 
-    // 🔹 Cập nhật Wishlist item
-    public void updateWishlistItem(Wishlist wishlist, FirestoreCallback<Boolean> callback) {
-        db.collection("wishlist")
-                .document(wishlist.getUserId() + "_" + wishlist.getProductId())
-                .update(
-                        "addedAt", wishlist.getAddedAt(),
-                        "isBought", wishlist.isBought()
-                )
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("Firestore", "✅ Wishlist item updated successfully");
-                    callback.onSuccess(true);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "❌ Failed to update wishlist item", e);
-                    callback.onFailure(e);
-                });
-    }
-
-    // 🔹 Xóa sản phẩm khỏi Wishlist
-    public void deleteWishlistItem(String userId, String productId, FirestoreCallback<Boolean> callback) {
-        db.collection("wishlist")
-                .document(userId + "_" + productId)
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("Firestore", "✅ Wishlist item deleted successfully");
-                    callback.onSuccess(true);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "❌ Failed to delete wishlist item", e);
-                    callback.onFailure(e);
-                });
-    }
-
     // 🔹 Lấy danh sách Wishlist theo User ID
     public void getWishlistByUserId(String userId, FirestoreCallback<List<Wishlist>> callback) {
         db.collection("wishlist")
@@ -104,24 +71,6 @@ public class WishlistDAO {
                 })
                 .addOnFailureListener(e -> {
                     Log.e("Firestore", "❌ Failed to remove wishlist item", e);
-                    callback.onFailure(e);
-                });
-    }
-
-    // 🔹 Lấy toàn bộ Wishlist (tất cả user)
-    public void getAllWishlistItems(FirestoreCallback<List<Wishlist>> callback) {
-        db.collection("wishlist")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    List<Wishlist> wishlistItems = new ArrayList<>();
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Wishlist wishlist = document.toObject(Wishlist.class);
-                        wishlistItems.add(wishlist);
-                    }
-                    callback.onSuccess(wishlistItems);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "❌ Failed to get all wishlist items", e);
                     callback.onFailure(e);
                 });
     }

@@ -12,9 +12,6 @@ public class CommentDAO {
     private static final String COLLECTION_NAME = "comments";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    /**
-     * 🔥 Thêm một bình luận mới vào Firestore.
-     */
     public void insertComment(Comment comment, FirestoreCallback<String> callback) {
         db.collection(COLLECTION_NAME)
                 .add(comment)
@@ -22,9 +19,6 @@ public class CommentDAO {
                 .addOnFailureListener(callback::onFailure);
     }
 
-    /**
-     * 🔥 Lấy tất cả bình luận theo `productId`.
-     */
     public void getCommentsByProduct(String productId, FirestoreCallback<List<Comment>> callback) {
         db.collection(COLLECTION_NAME)
                 .whereEqualTo("productId", productId)
@@ -44,31 +38,6 @@ public class CommentDAO {
                 .addOnFailureListener(callback::onFailure);
     }
 
-    /**
-     * 🔥 Cập nhật bình luận dựa trên ID.
-     */
-    public void updateComment(String commentId, String newContent, FirestoreCallback<Void> callback) {
-        db.collection(COLLECTION_NAME)
-                .document(commentId)
-                .update("commentText", newContent, "createdAt", System.currentTimeMillis())
-                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
-    }
-
-    /**
-     * 🔥 Xóa bình luận theo ID.
-     */
-    public void deleteComment(String commentId, FirestoreCallback<Void> callback) {
-        db.collection(COLLECTION_NAME)
-                .document(commentId)
-                .delete()
-                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
-    }
-
-    /**
-     * 🔥 Kiểm tra xem user đã bình luận sản phẩm chưa.
-     */
     public void hasUserCommented(String productId, String userId, FirestoreCallback<Boolean> callback) {
         db.collection(COLLECTION_NAME)
                 .whereEqualTo("productId", productId)
@@ -80,7 +49,6 @@ public class CommentDAO {
                 .addOnFailureListener(callback::onFailure);
     }
 
-    // Đếm số lượng bình luận theo `productId`
     public void countCommentsByProduct(String productId, FirestoreCallback<Integer> callback) {
         db.collection(COLLECTION_NAME)
                 .whereEqualTo("productId", productId)
